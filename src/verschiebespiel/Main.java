@@ -8,9 +8,8 @@ import java.util.Scanner;
 public class Main {
     static int[][] board;
     static int boardSize;
+    static int[] emptyFieldIndex;
     static int moves;
-    static int emptyFieldX;
-    static int emptyFieldY;
     static Scanner sc;
 
     // File path
@@ -26,21 +25,30 @@ public class Main {
         sc = new Scanner(System.in);
         moves = 0;
 
-        // Set Board Size
+        System.out.println(" --- Welcome to the 15 Puzzle ---");
+
+        // Ask if user would like to resume the previous game session or start a new one
         System.out.print("Board size (min. 3): ");
+
         boardSize = Integer.parseInt(sc.next());
+
+        System.out.print("Would you like to resume the previous game session? (y/n) ");
+        char previousGame = sc.next().charAt(0);
+        if (previousGame == 'Y' || previousGame == 'y') {
+            board = readFromFile();
+            printBoard(board);
+            play();
+        }
 
         // Create Board
         board = new int[boardSize][boardSize];
         boardSelection();
+        play();
 
-        play(sc);
-
-        askToContinue(sc);
     }
 
     static void boardSelection(){
-        List<int[][]> boards = new ArrayList<int[][]>();
+        List<int[][]> boards = new ArrayList<>();
 
         // Create Boards
         for (int i = 0; i < 4; i++){
@@ -65,7 +73,7 @@ public class Main {
         printBoard(board);
     }
 
-    private static void play(Scanner sc){
+    private static void play(){
         while (!isGameOver()) {
             System.out.print("Enter the number that you'd like to swap: ");
             int numberToSwap = Integer.parseInt(sc.next());
@@ -82,15 +90,7 @@ public class Main {
             // Create a BufferedWriter and FileWriter
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
-
-                for (int[] row : board) {
-                    for (int element : row ) {
-                        writer.write(Integer.toString(element));
-                        writer.write(" ");
-                    }
-                    writer.newLine();
-                }
-
+                writeToFile(writer);
                 // Close the writer
                 writer.close();
             } catch (IOException e) {
@@ -99,16 +99,6 @@ public class Main {
         }
     }
 
-    private static void askToContinue(Scanner sc){
-        System.out.print("Would you like to continue playing? (y/n) ");
-        char response = sc.next().charAt(0);
-        if (response == 'y' || response == 'Y') {
-            start();
-        }
-        else{
-            System.out.println("Exiting...");
-        }
-    }
 
     private static int[][] createRandomBoard() {
         int[][] boardRandom = new int[boardSize][boardSize];
@@ -158,12 +148,13 @@ public class Main {
         int fieldPositionX = fieldPosition[0];
         int fieldPositionY = fieldPosition[1];
 
+        emptyFieldIndex = getFieldIndex(0);
 
         board[fieldPositionX][fieldPositionY] = 0;
-        board[emptyFieldX][emptyFieldY] = number;
+        board[emptyFieldIndex[0]][emptyFieldIndex[1]] = number;
 
-        emptyFieldX = fieldPositionX;
-        emptyFieldY = fieldPositionY;
+        emptyFieldIndex[0] = fieldPositionX;
+        emptyFieldIndex[1] = fieldPositionY;
     }
 
     private static List<Integer> getAdjacentsFields(int numberToSwap) {
@@ -228,101 +219,34 @@ public class Main {
         return true;
     }
 
-    // Game over: Nicos Ansatz
+    // Optional feature: Save current state and read from file
 
-    private static boolean isGameOver2() {
-
-        for (int i=0; i < board.length; i++) {
-            for (int j=0; j < board[i].length; j++) {
-                int currentNumber = board[i][j];
-
-                // Get Previous number (j-1)
-                int prevNumber;
-                // Check if prev field is not in same row
-                if (j == 0){
-                    //If current number is first number and not 1, game not over.
-                    if (i == 0 && currentNumber != 1) return false;
-
-                    prevNumber = board[i-1][boardSize-1]; // Get last number from above row
-                }
-                else{
-                    prevNumber = board[i][j-1]; // Get previous number from same row
-                }
-
-                // if current number is not bigger than previous, then game is not over.
-                if (currentNumber < prevNumber) return false;
+    private static void writeToFile(BufferedWriter writer) throws IOException {
+        for (int[] row : board) {
+            for (int element : row ) {
+                writer.write(Integer.toString(element));
+                writer.write(" ");
             }
-        }
-
-        return true;
-    }
-
-    // Optional features
-    private static int[][] getRandomBoard() {
-        List<Integer> assignedNumbers = new ArrayList<>();
-
-        int[][] randomBoard = new int[3][3];
-
-        for (int i=0; i < randomBoard.length; i++) {
-            for (int j=0; j < randomBoard[i].length; j++) {
-                int ranNum;
-                boolean noValidNumber = true;
-                while (noValidNumber) {
-                    ranNum = generateRandomNumber();
-                    if (!assignedNumbers.contains(ranNum)){
-                        assignedNumbers.add(ranNum);
-                        randomBoard[i][j] = ranNum;
-                        noValidNumber = false;
-                    }
-                }
-            }
-        }
-
-        printBoardCustom(randomBoard);
-
-        return randomBoard;
-    }
-
-    private static void printBoardCustom(int[][] userBoard) {
-        for (int i=0; i < userBoard.length; i++) {
-            for (int j=0; j < userBoard[i].length; j++) {
-                int num = userBoard[i][j];
-                if (num == 0) {
-                    System.out.print("\t");
-                } else {
-                    System.out.print(userBoard[i][j] + "\t");
-                }
-            }
-            System.out.println();
+            writer.newLine();
         }
     }
 
-    private static void readFromFile() {
+    private static int[][] readFromFile() {
         try {
-            Scanner sc = new Scanner(new File(filePath));
-
-            int[][] fileBoard = new int[boardSize][boardSize];
+            Scanner fileReader  = new Scanner(new File(filePath));
+            int[][] gameBoard = new int[boardSize][boardSize];
 
             for (int i=0; i < boardSize; i++) {
                 for (int j=0; j < boardSize; j++) {
-                    if(sc.hasNextInt()) {
-                        fileBoard[i][j] = sc.nextInt();
+                    if(fileReader.hasNextInt()) {
+                        gameBoard[i][j] = fileReader.nextInt();
                     } else {
                         break;
                     }
                 }
             }
 
-            sc.close();
-
-            // Print function
-            for (int[] row : fileBoard) {
-                for (int element : row) {
-                    System.out.print(element + " ");
-                }
-                System.out.println();
-            }
-
+            return gameBoard;
         } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
