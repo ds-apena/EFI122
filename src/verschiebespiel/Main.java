@@ -11,6 +11,7 @@ public class Main {
     static int moves;
     static int emptyFieldX;
     static int emptyFieldY;
+    static Scanner sc;
 
     // File path
     static String filePath = "game_currentState.txt";
@@ -22,25 +23,46 @@ public class Main {
     private static void start() {
 
         // Init
-        Scanner sc = new Scanner(System.in);
+        sc = new Scanner(System.in);
         moves = 0;
 
         // Set Board Size
-        System.out.print("Spielgröße (mindestens 3): ");
+        System.out.print("Board size (min. 3): ");
         boardSize = Integer.parseInt(sc.next());
 
         // Create Board
         board = new int[boardSize][boardSize];
-        initBoardRandom();
-        printBoard();
+        boardSelection();
 
         play(sc);
 
         askToContinue(sc);
     }
 
-    private static void initGameState(){
+    static void boardSelection(){
+        List<int[][]> boards = new ArrayList<int[][]>();
 
+        // Create Boards
+        for (int i = 0; i < 4; i++){
+            boards.add(createRandomBoard());
+        }
+
+        // Print Boards
+        System.out.println();
+        for (int j=0; j< boards.size(); j++){
+            System.out.println("Board " + j + ": ");
+            printBoard(boards.get(j));
+            System.out.println();
+        }
+        System.out.println("Board 4: Random\n");
+
+        // Board Selection
+        System.out.print("Which board do you like to choose: ");
+        int selection = Integer.parseInt(sc.next());
+        board = boards.get(selection);
+
+        System.out.println();
+        printBoard(board);
     }
 
     private static void play(Scanner sc){
@@ -55,7 +77,7 @@ public class Main {
             }
 
             System.out.println("Total moves: " + moves);
-            printBoard();
+            printBoard(board);
 
             // Create a BufferedWriter and FileWriter
             try {
@@ -85,32 +107,29 @@ public class Main {
         }
         else{
             System.out.println("Exiting...");
-            sc.close();
         }
     }
 
-    private static void initBoardRandom() {
+    private static int[][] createRandomBoard() {
+        int[][] boardRandom = new int[boardSize][boardSize];
         List<Integer> assignedNumbers = new ArrayList<>();
 
-        for (int i=0; i < board.length; i++) {
-            for (int j=0; j < board[i].length; j++) {
+        for (int i=0; i < boardRandom.length; i++) {
+            for (int j=0; j < boardRandom[i].length; j++) {
                 int ranNum;
                 boolean noValidNumber = true;
                 while (noValidNumber) {
                     ranNum = generateRandomNumber();
                     if (!assignedNumbers.contains(ranNum)){
                         assignedNumbers.add(ranNum);
-                        board[i][j] = ranNum;
+                        boardRandom[i][j] = ranNum;
                         noValidNumber = false;
-
-                        if (ranNum == 0) {
-                            emptyFieldX = i;
-                            emptyFieldY = j;
-                        }
                     }
                 }
             }
         }
+
+        return boardRandom;
     }
 
     private static int generateRandomNumber() {
@@ -119,14 +138,14 @@ public class Main {
         return (int) Math.floor((Math.random() * ((max - min + 1) + min)));
     }
 
-    private static void printBoard() {
-        for (int i=0; i < board.length; i++) {
-            for (int j=0; j < board[i].length; j++) {
-                int num = board[i][j];
+    private static void printBoard(int[][] boardToPrint) {
+        for (int i=0; i < boardToPrint.length; i++) {
+            for (int j=0; j < boardToPrint[i].length; j++) {
+                int num = boardToPrint[i][j];
                 if (num == 0) {
                     System.out.print("\t");
                 } else {
-                    System.out.print(board[i][j] + "\t");
+                    System.out.print(boardToPrint[i][j] + "\t");
                 }
             }
             System.out.println();
