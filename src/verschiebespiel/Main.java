@@ -8,34 +8,47 @@ import java.util.Scanner;
 public class Main {
     static int[][] board;
     static int boardSize;
+    static int moves;
     static int emptyFieldX;
     static int emptyFieldY;
 
     // File path
     static String filePath = "game_currentState.txt";
 
-
     public static void main(String[] args) {
         start();
     }
 
     private static void start() {
-        Scanner sc = new Scanner(System.in);
-        int moves = 0;
 
+        // Init
+        Scanner sc = new Scanner(System.in);
+        moves = 0;
+
+        // Set Board Size
         System.out.print("Spielgröße (mindestens 3): ");
         boardSize = Integer.parseInt(sc.next());
 
+        // Create Board
         board = new int[boardSize][boardSize];
-
         initBoardRandom();
         printBoard();
 
+        play(sc);
+
+        askToContinue(sc);
+    }
+
+    private static void initGameState(){
+
+    }
+
+    private static void play(Scanner sc){
         while (!isGameOver()) {
             System.out.print("Enter the number that you'd like to swap: ");
-            int number = Integer.parseInt(sc.next());
-            if (getAdjacentsFields(number).contains(0)){
-                swapFields(number);
+            int numberToSwap = Integer.parseInt(sc.next());
+            if (getAdjacentsFields(numberToSwap).contains(0)){
+                swapFields(numberToSwap);
                 moves++;
             } else {
                 System.out.println("Invalid move");
@@ -44,7 +57,7 @@ public class Main {
             System.out.println("Total moves: " + moves);
             printBoard();
 
-            // Create a BufferedWriter and FileWritter
+            // Create a BufferedWriter and FileWriter
             try {
                 BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
 
@@ -62,17 +75,18 @@ public class Main {
                 e.printStackTrace();
             }
         }
+    }
 
+    private static void askToContinue(Scanner sc){
         System.out.print("Would you like to continue playing? (y/n) ");
         char response = sc.next().charAt(0);
-
         if (response == 'y' || response == 'Y') {
             start();
         }
-
-        System.out.println("Exiting...");
-
-        sc.close();
+        else{
+            System.out.println("Exiting...");
+            sc.close();
+        }
     }
 
     private static void initBoardRandom() {
